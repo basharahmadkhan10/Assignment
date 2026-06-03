@@ -23,6 +23,14 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum HazardClass {
+  NONE
+  FLAMMABLE
+  TOXIC
+  CORROSIVE
+  OXIDIZING
+}
+
 model User {
   id            String   @id @default(cuid())
   email         String   @unique
@@ -40,6 +48,11 @@ model Product {
   baseUnit         String      // e.g., 'g', 'mL', 'count'
   basePrice        Decimal     @db.Decimal(19, 4) // Price per single base unit in INR
   stockQuantity    Decimal     @db.Decimal(19, 6) // Total stock in base units
+  
+  // MedChem Edge Features
+  storageCondition String?     // e.g., 'Ambient', 'Refrigerated 2-8°C'
+  hazardClass      HazardClass @default(NONE)
+  
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
   orderItems       OrderItem[]
