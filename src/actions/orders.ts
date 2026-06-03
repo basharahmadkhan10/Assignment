@@ -100,22 +100,48 @@ export async function updateOrderStatus(orderId: string, newStatus: "CONFIRMED" 
   }
 
   try {
-    await prisma.order.update({
+    const order = await prisma.order.findUnique({
       where: { id: orderId },
-      data: { status: newStatus },
-    })
+      include: { items: true }
+    });
 
-    // Create Notification for the Buyer
-    await prisma.notification.create({
-      data: {
-        userId: userId,
-        message: `Your Order #${orderId.slice(-8)} has been ${newStatus.toLowerCase()}.`,
+    if (!order) {
+      return { error: "Order not found" }
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // 1. Update order status
+      await tx.order.update({
+        where: { id: orderId },
+        data: { status: newStatus },
+      })
+
+      // 2. Deduct inventory if CONFIRMED
+      if (newStatus === "CONFIRMED") {
+        for (const item of order.items) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: {
+              stockQuantity: {
+                decrement: item.baseQuantity
+              }
+            }
+          })
+        }
       }
+
+      // 3. Create Notification for the Buyer
+      await tx.notification.create({
+        data: {
+          userId: userId,
+          message: `Your Order #${orderId.slice(-8)} has been ${newStatus.toLowerCase()}.`,
+        }
+      })
     })
 
-    revalidatePath("/dashboard/orders")
+    revalidatePath("/dashboard", "layout")
     return { success: true }
   } catch (error) {
-    return { error: "Failed to update order status" }
+    return { error: "Failed to update order status or deduct inventory" }
   }
 }
