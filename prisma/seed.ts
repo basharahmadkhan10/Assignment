@@ -9,9 +9,13 @@ async function main() {
   
   if (!dbUrl) throw new Error("Could not find DATABASE_URL in .env");
 
+  // @ts-ignore
   const { PrismaClient, Role, Dimension, HazardClass } = await import('@prisma/client');
+  // @ts-ignore
   const bcrypt = (await import('bcryptjs')).default;
+  // @ts-ignore
   const { Pool } = await import('pg');
+  // @ts-ignore
   const { PrismaPg } = await import('@prisma/adapter-pg');
 
   const pool = new Pool({ connectionString: dbUrl.trim() });
