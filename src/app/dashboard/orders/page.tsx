@@ -1,4 +1,4 @@
-import { getOrders } from "@/actions/orders"
+import { getOrders, updateOrderStatus } from "@/actions/orders"
 import {
   Table,
   TableBody,
@@ -8,9 +8,19 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
 
 export default async function OrdersPage() {
+  const session = await getServerSession(authOptions)
+  const isAdmin = session?.user?.role === "ADMIN"
   const orders = await getOrders()
+
+  async function handleStatus(orderId: string, status: "CONFIRMED" | "CANCELLED", userId: string) {
+    "use server"
+    await updateOrderStatus(orderId, status, userId)
+  }
 
   return (
     <div className="space-y-6">
@@ -19,7 +29,7 @@ export default async function OrdersPage() {
         <p className="text-muted-foreground">View and manage all incoming quotations.</p>
       </div>
 
-      <div className="rounded-md border bg-card">
+      <div className="rounded-md border bg-card overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -29,6 +39,7 @@ export default async function OrdersPage() {
               <TableHead>Total Amount</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Date</TableHead>
+              {isAdmin && <TableHead className="text-right">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -51,22 +62,36 @@ export default async function OrdersPage() {
                     ))}
                   </ul>
                 </TableCell>
-                <TableCell className="font-medium">
+                <TableCell className="font-medium text-primary">
                   ₹{order.totalAmount.toString()}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={order.status === "PENDING" ? "secondary" : "default"}>
+                  <Badge variant={order.status === "PENDING" ? "secondary" : order.status === "CONFIRMED" ? "default" : "destructive"}>
                     {order.status}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right text-xs text-muted-foreground">
                   {new Date(order.createdAt).toLocaleDateString()}
                 </TableCell>
+                {isAdmin && (
+                  <TableCell className="text-right space-x-2">
+                    {order.status === "PENDING" && (
+                      <form action={handleStatus.bind(null, order.id, "CONFIRMED", order.userId)} className="inline">
+                        <Button type="submit" size="sm" variant="default" className="text-xs h-7">Approve</Button>
+                      </form>
+                    )}
+                    {order.status === "PENDING" && (
+                      <form action={handleStatus.bind(null, order.id, "CANCELLED", order.userId)} className="inline">
+                        <Button type="submit" size="sm" variant="destructive" className="text-xs h-7">Reject</Button>
+                      </form>
+                    )}
+                  </TableCell>
+                )}
               </TableRow>
             ))}
             {orders.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={isAdmin ? 7 : 6} className="h-24 text-center text-muted-foreground">
                   No orders found.
                 </TableCell>
               </TableRow>

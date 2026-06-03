@@ -9,6 +9,7 @@ datasource db {
 enum Role {
   ADMIN
   SELLER
+  BUYER
 }
 
 enum Dimension {
@@ -34,10 +35,23 @@ enum HazardClass {
 model User {
   id            String   @id @default(cuid())
   email         String   @unique
-  passwordHash  String
-  role          Role     @default(SELLER)
   name          String?
+  passwordHash  String
+  role          Role     @default(BUYER)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
   orders        Order[]
+  notifications Notification[]
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 
 model Product {

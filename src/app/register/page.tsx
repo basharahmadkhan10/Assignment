@@ -1,11 +1,11 @@
-import { LoginForm } from "@/components/LoginForm"
+import { RegisterForm } from "@/components/RegisterForm"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import Link from "next/link"
 import { Beaker } from "lucide-react"
+import Link from "next/link"
 
-export default async function LoginPage() {
+export default async function RegisterPage() {
   const session = await getServerSession(authOptions)
   
   if (session) {
@@ -25,17 +25,17 @@ export default async function LoginPage() {
         </div>
         <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-xs">
-            <LoginForm />
+            <RegisterForm />
           </div>
         </div>
       </div>
       <div className="relative hidden bg-muted lg:block">
-        <div className="absolute inset-0 bg-primary/10 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-primary/30 via-background to-background" />
+        <div className="absolute inset-0 bg-primary/10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/30 via-background to-background" />
         <div className="absolute inset-0 flex items-center justify-center p-12">
           <div className="space-y-4 max-w-lg text-left">
-            <h2 className="text-4xl font-bold tracking-tight">Streamlined Supply Chain.</h2>
+            <h2 className="text-4xl font-bold tracking-tight">Precision Inventory for Modern MedChem.</h2>
             <p className="text-lg text-muted-foreground">
-              Log in to manage your orders, track hazard class inventory, and dynamically convert units on the fly.
+              Join thousands of buyers placing seamless, highly accurate chemical quotations with dynamic unit conversions.
             </p>
           </div>
         </div>

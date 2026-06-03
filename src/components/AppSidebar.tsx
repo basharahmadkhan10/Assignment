@@ -2,6 +2,7 @@
 
 import { LogOut, Package, ShoppingCart, LayoutDashboard } from "lucide-react"
 import { signOut, useSession } from "next-auth/react"
+import { NotificationBell } from "@/components/NotificationBell"
 import {
   Sidebar,
   SidebarContent,
@@ -48,9 +49,12 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="p-4">
-        <h2 className="text-xl font-bold tracking-tight">AasaMedChem</h2>
-        <p className="text-xs text-muted-foreground truncate">{session?.user?.email}</p>
+      <SidebarHeader className="p-4 flex flex-row items-center justify-between">
+        <div className="flex flex-col">
+          <h2 className="text-xl font-bold tracking-tight">AasaMedChem</h2>
+          <p className="text-xs text-muted-foreground truncate">{session?.user?.email}</p>
+        </div>
+        {!isAdmin && <NotificationBell />}
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>

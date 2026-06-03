@@ -78,3 +78,30 @@ export async function getOrders() {
     orderBy: { createdAt: "desc" },
   })
 }
+
+export async function updateOrderStatus(orderId: string, newStatus: "CONFIRMED" | "CANCELLED", userId: string) {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== "ADMIN") {
+    return { error: "Unauthorized" }
+  }
+
+  try {
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { status: newStatus },
+    })
+
+    // Create Notification for the Buyer
+    await prisma.notification.create({
+      data: {
+        userId: userId,
+        message: `Your Order #${orderId.slice(-8)} has been ${newStatus.toLowerCase()}.`,
+      }
+    })
+
+    revalidatePath("/dashboard/orders")
+    return { success: true }
+  } catch (error) {
+    return { error: "Failed to update order status" }
+  }
+}
