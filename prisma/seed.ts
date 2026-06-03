@@ -12,14 +12,19 @@ async function main() {
   const { PrismaClient, Role, Dimension, HazardClass } = await import('@prisma/client');
   const bcrypt = (await import('bcryptjs')).default;
 
-  console.log("DB URL is:", dbUrl);
-  const prisma = new PrismaClient({
-    datasources: {
-      db: {
-        url: dbUrl,
-      },
-    },
-  });
+  const { Pool, neonConfig } = await import('@neondatabase/serverless');
+  const { PrismaNeon } = await import('@prisma/adapter-neon');
+  const ws = (await import('ws')).default;
+
+  const parsedUrl = new URL(dbUrl.trim());
+  parsedUrl.searchParams.delete('channel_binding');
+  const cleanUrl = parsedUrl.toString();
+  console.log("Cleaned DB URL:", cleanUrl);
+
+  neonConfig.webSocketConstructor = ws;
+  const pool = new Pool({ connectionString: cleanUrl });
+  const adapter = new PrismaNeon(pool);
+  const prisma = new PrismaClient({ adapter });
 
   const adminPassword = await bcrypt.hash('admin123', 10)
   const sellerPassword = await bcrypt.hash('seller123', 10)
