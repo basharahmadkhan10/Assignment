@@ -18,7 +18,7 @@ async function main() {
 
   const parsedUrl = new URL(dbUrl.trim());
   parsedUrl.searchParams.delete('channel_binding');
-  const cleanUrl = parsedUrl.toString();
+  const cleanUrl = parsedUrl.toString().replace('postgresql://', 'postgres://');
   console.log("Cleaned DB URL:", cleanUrl);
 
   neonConfig.webSocketConstructor = ws;
