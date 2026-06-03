@@ -33,6 +33,12 @@ export function AppSidebar() {
       visible: isAdmin,
     },
     {
+      title: "Orders",
+      url: "/dashboard/orders",
+      icon: ShoppingCart,
+      visible: true,
+    },
+    {
       title: "Create Quotation",
       url: "/dashboard/quotation",
       icon: ShoppingCart,
