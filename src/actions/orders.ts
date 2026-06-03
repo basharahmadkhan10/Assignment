@@ -42,6 +42,20 @@ export async function createOrder(items: OrderItemInput[], totalAmount: number) 
     }
   })
 
+  // Notify Admins
+  const admins = await prisma.user.findMany({
+    where: { role: "ADMIN" }
+  })
+  
+  if (admins.length > 0) {
+    await prisma.notification.createMany({
+      data: admins.map(admin => ({
+        userId: admin.id,
+        message: `New Order #${order.id.slice(-8)} placed by ${user.name || user.email}.`,
+      }))
+    })
+  }
+
   revalidatePath("/dashboard/quotation")
   
   return order

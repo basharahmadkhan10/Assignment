@@ -24,6 +24,10 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
+        if (!user.isActive) {
+          throw new Error("Your account has been deactivated by an admin.");
+        }
+
         const isPasswordValid = await bcrypt.compare(credentials.password, user.passwordHash);
 
         if (!isPasswordValid) {

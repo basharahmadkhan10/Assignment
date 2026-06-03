@@ -28,6 +28,12 @@ export function AppSidebar() {
       visible: true,
     },
     {
+      title: "Users",
+      url: "/dashboard/users",
+      icon: LayoutDashboard,
+      visible: isAdmin,
+    },
+    {
       title: "Inventory",
       url: "/dashboard/inventory",
       icon: Package,
