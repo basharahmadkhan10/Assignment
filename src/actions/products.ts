@@ -48,3 +48,22 @@ export async function deleteProduct(id: string) {
 
   revalidatePath("/dashboard", "layout")
 }
+
+export type ProductUpdateData = {
+  stockQuantity: number
+  basePrice: number
+}
+
+export async function updateProduct(id: string, data: ProductUpdateData) {
+  const session = await getServerSession(authOptions)
+  if (session?.user?.role !== "ADMIN") {
+    throw new Error("Unauthorized")
+  }
+
+  await prisma.product.update({
+    where: { id },
+    data,
+  })
+
+  revalidatePath("/dashboard", "layout")
+}

@@ -1,5 +1,6 @@
-import { getProducts, deleteProduct } from "@/actions/products"
+import { getProducts } from "@/actions/products"
 import { CreateProductDialog } from "@/components/CreateProductDialog"
+import { UpdateProductDialog } from "@/components/UpdateProductDialog"
 import {
   Table,
   TableBody,
@@ -17,22 +18,23 @@ export default async function InventoryPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Inventory</h1>
-          <p className="text-muted-foreground">Manage your product catalog and stock levels.</p>
+          <h1 className="text-3xl font-black uppercase tracking-tighter">Inventory</h1>
+          <p className="text-muted-foreground font-medium uppercase text-xs">Manage your product catalog and stock levels.</p>
         </div>
         <CreateProductDialog />
       </div>
 
-      <div className="rounded-md border">
+      <div className="rounded-md border-4 border-foreground shadow-[8px_8px_0px_0px_var(--color-foreground)] overflow-hidden bg-card">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-muted/50">
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Dimension</TableHead>
-              <TableHead>Base Unit</TableHead>
-              <TableHead className="text-right">Price (INR)</TableHead>
-              <TableHead className="text-right">Stock</TableHead>
-              <TableHead>Hazard</TableHead>
+              <TableHead className="font-bold uppercase">Name</TableHead>
+              <TableHead className="font-bold uppercase">Dimension</TableHead>
+              <TableHead className="font-bold uppercase">Base Unit</TableHead>
+              <TableHead className="text-right font-bold uppercase">Price (INR)</TableHead>
+              <TableHead className="text-right font-bold uppercase">Stock</TableHead>
+              <TableHead className="font-bold uppercase">Hazard</TableHead>
+              <TableHead className="text-right font-bold uppercase">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -41,27 +43,30 @@ export default async function InventoryPage() {
                 <TableCell className="font-medium">
                   {product.name}
                   {product.storageCondition && (
-                    <p className="text-xs text-muted-foreground">{product.storageCondition}</p>
+                    <p className="text-xs text-muted-foreground uppercase">{product.storageCondition}</p>
                   )}
                 </TableCell>
-                <TableCell>{product.dimension}</TableCell>
-                <TableCell>{product.baseUnit}</TableCell>
-                <TableCell className="text-right">{product.basePrice.toString()}</TableCell>
-                <TableCell className="text-right">{product.stockQuantity.toString()}</TableCell>
+                <TableCell className="uppercase text-xs font-bold">{product.dimension}</TableCell>
+                <TableCell className="uppercase text-xs font-bold">{product.baseUnit}</TableCell>
+                <TableCell className="text-right font-bold">₹{product.basePrice.toString()}</TableCell>
+                <TableCell className="text-right font-bold">{product.stockQuantity.toString()}</TableCell>
                 <TableCell>
                   {product.hazardClass && product.hazardClass !== "NONE" ? (
-                    <Badge variant="destructive" className="text-[10px]">
+                    <Badge variant="destructive" className="text-[10px] rounded-none border-2 border-foreground shadow-[2px_2px_0px_0px_var(--color-foreground)]">
                       {product.hazardClass}
                     </Badge>
                   ) : (
-                    <Badge variant="secondary" className="text-[10px]">NONE</Badge>
+                    <Badge variant="secondary" className="text-[10px] rounded-none border-2 border-foreground">NONE</Badge>
                   )}
+                </TableCell>
+                <TableCell className="text-right">
+                  <UpdateProductDialog product={product} />
                 </TableCell>
               </TableRow>
             ))}
             {products.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="h-24 text-center font-bold uppercase text-muted-foreground">
                   No products found. Add a product to get started.
                 </TableCell>
               </TableRow>
