@@ -29,12 +29,12 @@ export default async function RegisterPage() {
           </div>
         </div>
       </div>
-      <div className="relative hidden bg-muted lg:block">
-        <div className="absolute inset-0 bg-primary/10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/30 via-background to-background" />
-        <div className="absolute inset-0 flex items-center justify-center p-12">
+      <div className="relative hidden bg-primary text-primary-foreground lg:block">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-background/20 via-transparent to-transparent" />
+        <div className="absolute inset-0 flex items-center justify-center p-12 z-10">
           <div className="space-y-4 max-w-lg text-left">
             <h2 className="text-4xl font-bold tracking-tight">Precision Inventory for Modern MedChem.</h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-lg text-primary-foreground/80">
               Join thousands of buyers placing seamless, highly accurate chemical quotations with dynamic unit conversions.
             </p>
           </div>
