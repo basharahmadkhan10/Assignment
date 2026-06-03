@@ -41,10 +41,10 @@ export default async function Home() {
       <main className="flex-1">
         <section className="w-full py-24 md:py-32 lg:py-48 bg-primary relative overflow-hidden">
           {/* Floating Background Elements */}
-          <div className="absolute top-10 left-[10%] w-24 h-24 bg-secondary border-4 border-foreground shadow-[8px_8px_0px_0px_var(--color-foreground)] animate-float opacity-80 md:w-32 md:h-32"></div>
-          <div className="absolute bottom-20 left-[20%] w-16 h-16 rounded-full bg-background border-4 border-foreground shadow-[4px_4px_0px_0px_var(--color-foreground)] animate-float-reverse opacity-90 md:w-20 md:h-20"></div>
-          <div className="absolute top-32 right-[15%] w-28 h-28 bg-accent border-4 border-foreground shadow-[8px_8px_0px_0px_var(--color-foreground)] animate-float-slow opacity-90 md:w-40 md:h-40 rotate-12"></div>
-          <div className="absolute bottom-10 right-[5%] w-20 h-20 rounded-full bg-secondary border-4 border-foreground shadow-[6px_6px_0px_0px_var(--color-foreground)] animate-float opacity-80 md:w-28 md:h-28"></div>
+          <div className="absolute top-16 left-[5%] md:left-[10%] w-12 h-12 md:w-16 md:h-16 bg-background border-4 border-foreground shadow-[4px_4px_0px_0px_var(--color-foreground)] animate-float opacity-90"></div>
+          <div className="absolute bottom-16 left-[5%] md:left-[10%] w-12 h-12 md:w-16 md:h-16 rounded-full bg-background border-4 border-foreground shadow-[4px_4px_0px_0px_var(--color-foreground)] animate-float-reverse opacity-90"></div>
+          <div className="absolute top-16 right-[5%] md:right-[10%] w-12 h-12 md:w-16 md:h-16 bg-background border-4 border-foreground shadow-[4px_4px_0px_0px_var(--color-foreground)] animate-float-slow opacity-90 rotate-12"></div>
+          <div className="absolute bottom-16 right-[5%] md:right-[10%] w-12 h-12 md:w-16 md:h-16 rounded-full bg-background border-4 border-foreground shadow-[4px_4px_0px_0px_var(--color-foreground)] animate-float opacity-90"></div>
           
           <div className="container px-4 md:px-6 relative z-10">
             <div className="flex flex-col items-center space-y-8 text-center">
