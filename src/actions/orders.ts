@@ -26,6 +26,17 @@ export async function createOrder(items: OrderItemInput[], totalAmount: number) 
   
   if (!user) throw new Error("User not found")
 
+  // Pre-validate stock
+  for (const item of items) {
+    const product = await prisma.product.findUnique({
+      where: { id: item.productId }
+    })
+    if (!product) throw new Error("Product not found")
+    if (Number(product.stockQuantity) < item.baseQuantity) {
+      throw new Error(`Insufficient stock for ${product.name}. Available: ${product.stockQuantity}, Requested: ${item.baseQuantity}`)
+    }
+  }
+
   const order = await prisma.order.create({
     data: {
       userId: user.id,
@@ -110,15 +121,21 @@ export async function updateOrderStatus(orderId: string, newStatus: "CONFIRMED" 
     }
 
     await prisma.$transaction(async (tx) => {
-      // 1. Update order status
-      await tx.order.update({
-        where: { id: orderId },
-        data: { status: newStatus },
-      })
-
-      // 2. Deduct inventory if CONFIRMED
+      // 2. Check and Deduct inventory if CONFIRMED
       if (newStatus === "CONFIRMED") {
         for (const item of order.items) {
+          const product = await tx.product.findUnique({
+            where: { id: item.productId },
+          })
+          
+          if (!product) {
+            throw new Error("Product not found")
+          }
+          
+          if (Number(product.stockQuantity) < Number(item.baseQuantity)) {
+            throw new Error(`Insufficient stock for ${product.name}. Available: ${product.stockQuantity}, Requested: ${item.baseQuantity}`)
+          }
+
           await tx.product.update({
             where: { id: item.productId },
             data: {
@@ -129,6 +146,12 @@ export async function updateOrderStatus(orderId: string, newStatus: "CONFIRMED" 
           })
         }
       }
+
+      // 1. Update order status
+      await tx.order.update({
+        where: { id: orderId },
+        data: { status: newStatus },
+      })
 
       // 3. Create Notification for the Buyer
       await tx.notification.create({
@@ -141,7 +164,7 @@ export async function updateOrderStatus(orderId: string, newStatus: "CONFIRMED" 
 
     revalidatePath("/dashboard", "layout")
     return { success: true }
-  } catch (error) {
-    return { error: "Failed to update order status or deduct inventory" }
+  } catch (error: any) {
+    return { error: error.message || "Failed to update order status or deduct inventory" }
   }
 }
