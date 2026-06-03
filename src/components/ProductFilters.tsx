@@ -34,7 +34,7 @@ export function ProductFilters() {
     })
   }, 300)
 
-  const handleHazardChange = (val: string) => {
+  const handleHazardChange = (val: string | null) => {
     const params = new URLSearchParams(searchParams)
     if (val && val !== "ALL") {
       params.set("hazard", val)

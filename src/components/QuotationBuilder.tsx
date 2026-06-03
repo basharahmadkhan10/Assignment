@@ -111,18 +111,17 @@ export function QuotationBuilder({ products }: { products: Product[] }) {
           <div className="space-y-2">
             <label className="text-sm font-medium">Product</label>
             <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
+              <PopoverTrigger render={
                 <Button
                   variant="outline"
                   role="combobox"
-                  aria-expanded={open}
                   className="w-full justify-between h-10 rounded-lg border-2 border-foreground shadow-[2px_2px_0px_0px_var(--color-foreground)] bg-background px-3 py-1 font-normal"
-                >
-                  {selectedProduct
-                    ? products.find((p) => p.id === selectedProduct)?.name
-                    : "Select a product..."}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
+                />
+              }>
+                {selectedProduct
+                  ? products.find((p) => p.id === selectedProduct)?.name
+                  : "Select a product..."}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </PopoverTrigger>
               <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 border-2 border-foreground shadow-[4px_4px_0px_0px_var(--color-foreground)]" align="start">
                 <Command>

@@ -1,7 +1,6 @@
 import { getAdminAnalytics } from "@/actions/analytics"
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { OverviewChart } from "@/components/OverviewChart"
 
 export default async function OverviewPage() {
   const analytics = await getAdminAnalytics()
@@ -53,32 +52,7 @@ export default async function OverviewPage() {
           <CardDescription className="font-medium">Number of orders by their current status</CardDescription>
         </CardHeader>
         <CardContent className="p-6">
-          <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
-            <BarChart accessibilityLayer data={chartData}>
-              <CartesianGrid vertical={false} stroke="var(--color-border)" strokeWidth={2} />
-              <XAxis
-                dataKey="status"
-                tickLine={false}
-                tickMargin={10}
-                axisLine={false}
-                className="font-bold text-xs"
-              />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                tickMargin={10}
-                className="font-bold text-xs"
-                allowDecimals={false}
-              />
-              <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-              <Bar
-                dataKey="count"
-                strokeWidth={4}
-                stroke="var(--color-foreground)"
-                radius={[4, 4, 0, 0]}
-              />
-            </BarChart>
-          </ChartContainer>
+          <OverviewChart chartData={chartData} chartConfig={chartConfig} />
         </CardContent>
       </Card>
     </div>
