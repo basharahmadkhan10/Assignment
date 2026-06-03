@@ -1,0 +1,233 @@
+"use client"
+
+import { useState } from "react"
+import { convertQuantity, getAvailableUnits, calculatePrice } from "@/lib/units"
+import { createOrder, OrderItemInput } from "@/actions/orders"
+import { Product } from "@prisma/client"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
+
+export function QuotationBuilder({ products }: { products: Product[] }) {
+  const router = useRouter()
+  const [selectedProduct, setSelectedProduct] = useState<string>("")
+  const [quantity, setQuantity] = useState<number>(1)
+  const [unit, setUnit] = useState<string>("")
+  const [cart, setCart] = useState<(OrderItemInput & { product: Product })[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const activeProduct = products.find(p => p.id === selectedProduct)
+  const availableUnits = activeProduct ? getAvailableUnits(activeProduct.dimension) : []
+
+  const handleAddToCart = () => {
+    if (!activeProduct || !unit || quantity <= 0) return
+
+    try {
+      const price = calculatePrice(quantity, unit, Number(activeProduct.basePrice), activeProduct.baseUnit)
+      const baseQty = convertQuantity(quantity, unit, activeProduct.baseUnit)
+      
+      setCart([...cart, {
+        productId: activeProduct.id,
+        product: activeProduct,
+        orderedQuantity: quantity,
+        orderedUnit: unit,
+        baseQuantity: baseQty,
+        calculatedPrice: price
+      }])
+      
+      // Reset form
+      setSelectedProduct("")
+      setQuantity(1)
+      setUnit("")
+      toast.success("Added to quotation")
+    } catch (e) {
+      toast.error("Failed to calculate price due to invalid units")
+    }
+  }
+
+  const handleRemove = (index: number) => {
+    setCart(cart.filter((_, i) => i !== index))
+  }
+
+  const totalAmount = cart.reduce((sum, item) => sum + item.calculatedPrice, 0)
+
+  const handleSubmitQuotation = async () => {
+    if (cart.length === 0) return
+    setIsSubmitting(true)
+    
+    try {
+      await createOrder(cart, totalAmount)
+      toast.success("Quotation submitted successfully!")
+      setCart([])
+      router.refresh()
+    } catch (e) {
+      toast.error("Failed to submit quotation")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="grid gap-8 md:grid-cols-12">
+      <div className="md:col-span-5 space-y-6 rounded-xl border bg-card p-6">
+        <div>
+          <h2 className="text-lg font-semibold">Select Product</h2>
+          <p className="text-sm text-muted-foreground">Add items to your quotation</p>
+        </div>
+        
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Product</label>
+            <Select 
+              value={selectedProduct} 
+              onValueChange={(val) => {
+                const newValue = val || ""
+                setSelectedProduct(newValue)
+                const p = products.find(prod => prod.id === newValue)
+                if (p) setUnit(getAvailableUnits(p.dimension)[0] || "")
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a product..." />
+              </SelectTrigger>
+              <SelectContent>
+                {products.map(p => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Quantity</label>
+              <Input 
+                type="number" 
+                min="0.1" 
+                step="any" 
+                value={quantity} 
+                onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)} 
+                disabled={!selectedProduct}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Unit</label>
+              <Select 
+                value={unit} 
+                onValueChange={(val) => setUnit(val || "")} 
+                disabled={!selectedProduct || availableUnits.length === 0}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Unit" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableUnits.map(u => (
+                    <SelectItem key={u} value={u}>{u}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {activeProduct && unit && quantity > 0 && (
+            <div className="rounded-lg bg-muted p-4 space-y-1">
+              <div className="text-sm text-muted-foreground">Estimated Price</div>
+              <div className="text-2xl font-bold">
+                ₹{calculatePrice(quantity, unit, Number(activeProduct.basePrice), activeProduct.baseUnit)}
+              </div>
+            </div>
+          )}
+
+          <Button 
+            className="w-full" 
+            onClick={handleAddToCart}
+            disabled={!selectedProduct || quantity <= 0 || !unit}
+          >
+            Add to Quotation
+          </Button>
+        </div>
+      </div>
+
+      <div className="md:col-span-7 space-y-6">
+        <div>
+          <h2 className="text-lg font-semibold">Current Quotation</h2>
+          <p className="text-sm text-muted-foreground">Review and submit</p>
+        </div>
+
+        <div className="rounded-xl border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Product</TableHead>
+                <TableHead className="text-right">Qty</TableHead>
+                <TableHead className="text-right">Price</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {cart.map((item, i) => (
+                <TableRow key={i}>
+                  <TableCell>
+                    <div className="font-medium">{item.product.name}</div>
+                    <div className="text-xs text-muted-foreground">{item.product.hazardClass}</div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {item.orderedQuantity} {item.orderedUnit}
+                  </TableCell>
+                  <TableCell className="text-right font-medium">
+                    ₹{item.calculatedPrice}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="sm" onClick={() => handleRemove(i)} className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                      Remove
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {cart.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="h-32 text-center text-muted-foreground">
+                    No items in quotation.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+
+          {cart.length > 0 && (
+            <div className="border-t p-6">
+              <div className="flex items-center justify-between font-semibold text-lg mb-4">
+                <span>Total Amount:</span>
+                <span>₹{totalAmount.toFixed(2)}</span>
+              </div>
+              <Button 
+                className="w-full" 
+                size="lg" 
+                onClick={handleSubmitQuotation}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Submitting..." : "Submit Quotation Request"}
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
