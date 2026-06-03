@@ -1,22 +1,17 @@
 import fs from 'fs';
 import path from 'path';
+import { PrismaClient, Role, Dimension, HazardClass } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+import { Pool } from 'pg';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 async function main() {
   const envPath = path.resolve(process.cwd(), '.env');
-  const envContent = fs.readFileSync(envPath, 'utf-8');
+  const envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf-8') : '';
   const dbUrlMatch = envContent.match(/DATABASE_URL="?([^"\n]+)"?/);
   const dbUrl = dbUrlMatch ? dbUrlMatch[1].trim() : process.env.DATABASE_URL;
   
-  if (!dbUrl) throw new Error("Could not find DATABASE_URL in .env");
-
-  // @ts-ignore
-  const { PrismaClient, Role, Dimension, HazardClass } = await import('@prisma/client');
-  // @ts-ignore
-  const bcrypt = (await import('bcryptjs')).default;
-  // @ts-ignore
-  const { Pool } = await import('pg');
-  // @ts-ignore
-  const { PrismaPg } = await import('@prisma/adapter-pg');
+  if (!dbUrl) throw new Error("Could not find DATABASE_URL in environment or .env");
 
   const pool = new Pool({ connectionString: dbUrl.trim() });
   const adapter = new PrismaPg(pool);
