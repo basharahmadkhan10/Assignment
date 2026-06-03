@@ -33,7 +33,7 @@ export async function createProduct(data: ProductCreateData) {
     data,
   })
 
-  revalidatePath("/dashboard/inventory")
+  revalidatePath("/dashboard", "layout")
 }
 
 export async function deleteProduct(id: string) {
@@ -46,5 +46,5 @@ export async function deleteProduct(id: string) {
     where: { id },
   })
 
-  revalidatePath("/dashboard/inventory")
+  revalidatePath("/dashboard", "layout")
 }
