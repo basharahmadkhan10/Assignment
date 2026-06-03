@@ -11,19 +11,11 @@ async function main() {
 
   const { PrismaClient, Role, Dimension, HazardClass } = await import('@prisma/client');
   const bcrypt = (await import('bcryptjs')).default;
+  const { Pool } = await import('pg');
+  const { PrismaPg } = await import('@prisma/adapter-pg');
 
-  const { Pool, neonConfig } = await import('@neondatabase/serverless');
-  const { PrismaNeon } = await import('@prisma/adapter-neon');
-  const ws = (await import('ws')).default;
-
-  const parsedUrl = new URL(dbUrl.trim());
-  parsedUrl.searchParams.delete('channel_binding');
-  const cleanUrl = parsedUrl.toString().replace('postgresql://', 'postgres://');
-  console.log("Cleaned DB URL:", cleanUrl);
-
-  neonConfig.webSocketConstructor = ws;
-  const pool = new Pool({ connectionString: cleanUrl });
-  const adapter = new PrismaNeon(pool);
+  const pool = new Pool({ connectionString: dbUrl.trim() });
+  const adapter = new PrismaPg(pool);
   const prisma = new PrismaClient({ adapter });
 
   const adminPassword = await bcrypt.hash('admin123', 10)
