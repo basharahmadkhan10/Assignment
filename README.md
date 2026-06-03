@@ -1,61 +1,94 @@
-# AasaMedChem Assignment
+# AasaMedChem - Inventory & Order Management Platform
 
-A complete inventory and order management system built with Next.js, Neon PostgreSQL, Prisma, NextAuth, and Tailwind CSS (shadcn/ui). This project was designed to fulfill the Hackathon Assignment requirements for AasaMedChem.
+A highly robust, scalable, and visually striking inventory and order management system built with Next.js (App Router), Prisma, Neon Serverless PostgreSQL, and a custom "Neobrutalist" design language. Designed specifically for the AasaMedChem hackathon assignment.
 
-## Features & Project Overview
-- **Dark-Theme UI**: Built with Shadcn UI and `next-themes` using modern aesthetics.
-- **Neon PostgreSQL**: Edge-ready serverless database integration using the `pg` adapter.
-- **NextAuth**: Role-based authentication (`ADMIN` and `SELLER`).
-- **MedChem Edge Functionality**: Domain-specific product tracking (Hazard Class, Storage Conditions).
-- **Dynamic Quotation Builder**: Automatic price calculation and unit conversion (e.g. converting Liters to base unit mL dynamically).
-- **Admin Dashboard**: View inventory, add new chemical products, and view incoming orders with precise conversion details.
+## Project Overview & Features
+The AasaMedChem platform allows users (Buyers/Sellers) to browse chemical inventory, perform complex scientific unit conversions on the fly, and place precise quotations. Administrators have complete authority to manage users, update inventory stock dynamically, and approve or reject incoming orders.
+
+**Key Features:**
+- **Dynamic Unit Conversion:** Order in L, mL, kg, g, or count. The system mathematically scales base prices and quantities in real-time.
+- **Role-Based Access Control (RBAC):** Strict separation between `ADMIN` and `BUYER` roles, complete with account suspension toggles (`isActive`).
+- **Dynamic Inventory Deduction:** Atomic transaction logic securely deducts chemical stock the moment an Admin confirms an order.
+- **Neobrutalism UI/UX:** A striking Black & White design utilizing `Space Grotesk` typography, solid structural borders, and sharp box-shadows.
+
+---
 
 ## Tech Stack & High-Level System Design
-- **Frontend**: Next.js 15 (App Router), React, Tailwind CSS, Shadcn UI.
-- **Backend**: Next.js Server Actions handle business logic (creating products, calculating orders) securely on the server.
-- **Database**: Neon PostgreSQL accessed via Prisma ORM (`@prisma/adapter-pg` ensures smooth connection pooling).
-- **Architecture**: The frontend interfaces directly with Server Actions, which communicate with Prisma. Database connections are handled via WebSockets (`pg` driver) to bypass standard serverless cold-start limitations.
+- **Frontend (Presentation):** Built with Next.js 14+ App Router, React, Tailwind CSS, and `shadcn/ui`. The UI serves purely as a presentation and translation layer, handling initial unit math before submitting strict "Base Units" to the backend.
+- **Backend (Logic):** Utilizes Next.js Server Actions. This creates a highly secure, type-safe RPC (Remote Procedure Call) layer, bypassing the need for traditional REST API routes.
+- **Database (Data):** Neon Serverless PostgreSQL. Connected via Prisma ORM using connection pooling (`?pgbouncer=true`) to completely prevent serverless cold-start bottlenecks. 
+
+---
 
 ## Unit Storage & Conversion Strategy
-Handling scientific and chemical units requires precision and consistency.
+Handling scientific inventory requires extreme consistency to prevent rounding and conversion errors.
 
-1. **Internal Storage (Base Units)**:
-   - All products have a strictly defined `dimension` (WEIGHT, VOLUME, COUNT).
-   - Every product defines a `baseUnit` (e.g., `mL` for volume, `g` for weight).
-   - `stockQuantity` and `basePrice` in the database are ALWAYS stored in relation to this `baseUnit`.
-2. **Conversion Strategy (`src/lib/units.ts`)**:
-   - The user selects a `requestedUnit` in the frontend (e.g., they want 1 L of Acetone).
-   - The system checks the conversion rate (1 L = 1000 mL).
-   - The `convertQuantity` utility maps the requested unit to the base unit mathematically (e.g., `1 * 1000 = 1000 mL baseQuantity`).
-   - The price is calculated purely against the `baseQuantity`.
-3. **Audit Trail**:
-   - The `OrderItem` table stores both what the user requested (`orderedQuantity` = 1, `orderedUnit` = 'L') AND the exact system interpretation (`baseQuantity` = 1000). This provides admins with a perfect audit trail and ensures calculations are sensible.
+### The "Base Unit" Architecture
+The database acts as a strict, immutable single source of truth. It **never** stores secondary units like `kg` or `L`. 
+1. Every product has a defined `dimension` (WEIGHT, VOLUME, COUNT) and a lowest `baseUnit` (`g`, `mL`, `count`).
+2. **Translation:** When a user inputs an order for `5 kg`, a centralized utility (`src/lib/units.ts`) translates this to `5000 g`.
+3. **Storage:** The backend strictly processes and stores `5000 g`. 
+4. **Audit Trail:** The `OrderItem` table stores what the user requested (`orderedQuantity` = 5, `orderedUnit` = 'kg') AND the system's strict interpretation (`baseQuantity` = 5000). This provides Admins with a perfect audit trail.
 
-## Database Schema & Data Types (Precision & Scale)
-Because chemical inventory handles micro-quantities (mg) and large bulk amounts (kg), standard floating-point numbers are insufficient and prone to rounding errors.
+---
 
-- **Choice of Type**: We used PostgreSQL's `DECIMAL` (mapped via Prisma as `Decimal`).
-- **Quantities**: `Decimal(19, 6)` is used for `stockQuantity`, `orderedQuantity`, and `baseQuantity`. This safely stores up to 6 decimal places (perfect for milligram scaling against kilograms) and massive bulk integers.
-- **Pricing**: `Decimal(19, 4)` is used for `basePrice` and `totalAmount`. This stores 4 decimal places for currency, preventing micro-cent drift during multiplication of large quantities.
+## Database Schema & Data Types
+Because chemical APIs are often ordered in micro-fractions (e.g., 0.0005 kg) and priced highly, standard floating-point numbers in JavaScript/PostgreSQL are prone to arithmetic drift.
 
-## Demo Credentials
-- **Admin Role**: `admin@aasamedchem.com` / `admin123`
-- **Seller Role**: `seller@aasamedchem.com` / `seller123`
+- **Choice of Type**: PostgreSQL `DECIMAL` (mapped via Prisma as `Decimal`).
+- **Quantities (`Decimal(19, 6)`)**: Safely stores up to 6 decimal places, ensuring extreme precision when mapping fractions of kilograms down to grams without data loss.
+- **Prices (`Decimal(19, 4)`)**: Prices and totals (`basePrice`, `calculatedPrice`) are stored to 4 decimal places for exact currency representation, preventing penny-drift during massive bulk multiplications.
 
-## Running Locally
-1. Clone the repository and run `npm install`.
-2. Copy `.env.example` to `.env` and add your `DATABASE_URL` and `NEXTAUTH_SECRET`.
-3. Run `npm run seed` to populate the initial database schema with demo accounts and dummy chemical products.
-4. Run `npm run dev` to start the development server.
+---
+
+## Setup Instructions (Running Locally)
+1. **Clone and Install**: 
+   ```bash
+   git clone <repo-url>
+   cd Assignment
+   npm install
+   ```
+2. **Environment Setup**: 
+   Create a `.env` file in the root directory.
+   ```env
+   DATABASE_URL="postgresql://<user>:<password>@<neon-host>.neon.tech/neondb?sslmode=require&pgbouncer=true"
+   NEXTAUTH_SECRET="any_secure_random_string_here"
+   NEXTAUTH_URL="http://localhost:3000"
+   ```
+3. **Database Migration & Seeding**:
+   ```bash
+   npx prisma db push
+   npx tsx prisma/seed.ts
+   ```
+4. **Run Development Server**:
+   ```bash
+   npm run dev
+   ```
+
+---
+
+## Demo Credentials & Usage Flow
+The `seed.ts` script injects a fully populated chemical catalog and two accounts:
+- **Admin**: `admin@aasamedchem.com` / `password`
+- **Buyer**: `buyer@aasamedchem.com` / `password`
+
+**Admin Flow:**
+1. Log in as Admin. You are routed to `/dashboard/inventory`.
+2. Add new products or use the **Update** button to modify base prices and available stock.
+3. Visit the **Users** tab to Activate/Deactivate buyer accounts.
+4. Visit the **Orders** tab to review incoming quotations and click "Confirm" to instantly deduct the requested stock from your inventory.
+
+**Buyer Flow:**
+1. Log in as Buyer. You are routed to the **Quotation Builder**.
+2. Select a chemical, choose your preferred scientific unit (e.g., L instead of mL), and input a quantity.
+3. The system dynamically scales the price. Submit the order.
+4. Check your Dashboard. When an Admin confirms the order, a notification appears in your Notification Bell!
+
+---
 
 ## Vercel Deployment Instructions
-To deploy this repository to your Vercel account:
-1. Push all your code to a GitHub repository.
-2. Go to your [Vercel Dashboard](https://vercel.com/dashboard) and click **Add New > Project**.
-3. Import your GitHub repository.
-4. **Environment Variables**: Add:
-   - `DATABASE_URL` = (Your Neon PostgreSQL Connection String)
-   - `NEXTAUTH_SECRET` = (A random string, e.g., `my_super_secret_key_123`)
-5. Click **Deploy**. Vercel will automatically detect Next.js and build the project successfully.
-
-*(Note: The build utilizes `tsconfig.json` exclusions to prevent serverless deployment failures on local seeding scripts)*
+To re-deploy this system:
+1. Push the code to a GitHub repository.
+2. In the Vercel Dashboard, select **Add New > Project** and import the repository.
+3. In the **Environment Variables** section, add `DATABASE_URL` (your Neon connection string) and `NEXTAUTH_SECRET`.
+4. Click **Deploy**. Vercel will automatically build the Next.js App Router and launch the platform.
