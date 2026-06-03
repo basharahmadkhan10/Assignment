@@ -1,7 +1,14 @@
-import * as dotenv from 'dotenv';
-dotenv.config();
+import fs from 'fs';
+import path from 'path';
 
 async function main() {
+  const envPath = path.resolve(process.cwd(), '.env');
+  const envContent = fs.readFileSync(envPath, 'utf-8');
+  const dbUrlMatch = envContent.match(/DATABASE_URL="?([^"\n]+)"?/);
+  const dbUrl = dbUrlMatch ? dbUrlMatch[1].trim() : process.env.DATABASE_URL;
+  
+  if (!dbUrl) throw new Error("Could not find DATABASE_URL in .env");
+
   const { PrismaClient, Role, Dimension, HazardClass } = await import('@prisma/client');
   const bcrypt = (await import('bcryptjs')).default;
   const { Pool, neonConfig } = await import('@neondatabase/serverless');
@@ -9,7 +16,7 @@ async function main() {
   const ws = (await import('ws')).default;
 
   neonConfig.webSocketConstructor = ws;
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const pool = new Pool({ connectionString: dbUrl });
   const adapter = new PrismaNeon(pool);
   const prisma = new PrismaClient({ adapter });
 
