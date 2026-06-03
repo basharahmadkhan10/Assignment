@@ -21,6 +21,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Check, ChevronsUpDown } from "lucide-react"
+import { cn } from "@/lib/utils"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 
@@ -31,6 +46,7 @@ export function QuotationBuilder({ products }: { products: Product[] }) {
   const [unit, setUnit] = useState<string>("")
   const [cart, setCart] = useState<(OrderItemInput & { product: Product })[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [open, setOpen] = useState(false)
 
   const activeProduct = products.find(p => p.id === selectedProduct)
   const availableUnits = activeProduct ? getAvailableUnits(activeProduct.dimension) : []
@@ -94,24 +110,51 @@ export function QuotationBuilder({ products }: { products: Product[] }) {
         <div className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Product</label>
-            <Select 
-              value={selectedProduct} 
-              onValueChange={(val) => {
-                const newValue = val || ""
-                setSelectedProduct(newValue)
-                const p = products.find(prod => prod.id === newValue)
-                if (p) setUnit(getAvailableUnits(p.dimension)[0] || "")
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a product..." />
-              </SelectTrigger>
-              <SelectContent>
-                {products.map(p => (
-                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className="w-full justify-between h-10 rounded-lg border-2 border-foreground shadow-[2px_2px_0px_0px_var(--color-foreground)] bg-background px-3 py-1 font-normal"
+                >
+                  {selectedProduct
+                    ? products.find((p) => p.id === selectedProduct)?.name
+                    : "Select a product..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 border-2 border-foreground shadow-[4px_4px_0px_0px_var(--color-foreground)]" align="start">
+                <Command>
+                  <CommandInput placeholder="Search product..." className="h-9" />
+                  <CommandList>
+                    <CommandEmpty>No product found.</CommandEmpty>
+                    <CommandGroup>
+                      {products.map((p) => (
+                        <CommandItem
+                          key={p.id}
+                          value={p.id}
+                          onSelect={(currentValue) => {
+                            setSelectedProduct(currentValue === selectedProduct ? "" : currentValue)
+                            setOpen(false)
+                            const prod = products.find(prod => prod.id === currentValue)
+                            if (prod) setUnit(getAvailableUnits(prod.dimension)[0] || "")
+                          }}
+                        >
+                          {p.name}
+                          <Check
+                            className={cn(
+                              "ml-auto h-4 w-4",
+                              selectedProduct === p.id ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
