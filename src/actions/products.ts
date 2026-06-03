@@ -6,8 +6,22 @@ import { revalidatePath } from "next/cache"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 
-export async function getProducts() {
+export async function getProducts(params?: { search?: string, hazard?: string }) {
+  const whereClause: any = {}
+
+  if (params?.search) {
+    whereClause.name = {
+      contains: params.search,
+      mode: 'insensitive',
+    }
+  }
+
+  if (params?.hazard && params.hazard !== 'ALL') {
+    whereClause.hazardClass = params.hazard
+  }
+
   return prisma.product.findMany({
+    where: whereClause,
     orderBy: { createdAt: "desc" },
   })
 }

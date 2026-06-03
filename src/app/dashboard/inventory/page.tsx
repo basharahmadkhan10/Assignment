@@ -10,9 +10,18 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { ProductFilters } from "@/components/ProductFilters"
 
-export default async function InventoryPage() {
-  const products = await getProducts()
+export default async function InventoryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const resolvedParams = await searchParams
+  const search = typeof resolvedParams.search === "string" ? resolvedParams.search : undefined
+  const hazard = typeof resolvedParams.hazard === "string" ? resolvedParams.hazard : undefined
+
+  const products = await getProducts({ search, hazard })
 
   return (
     <div className="space-y-6">
@@ -23,6 +32,8 @@ export default async function InventoryPage() {
         </div>
         <CreateProductDialog />
       </div>
+
+      <ProductFilters />
 
       <div className="rounded-md border-4 border-foreground shadow-[8px_8px_0px_0px_var(--color-foreground)] overflow-hidden bg-card">
         <Table>
