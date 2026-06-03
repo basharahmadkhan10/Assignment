@@ -11,7 +11,7 @@ export default async function DashboardPage() {
 
   // Redirect to role-specific default page
   if (session.user.role === "ADMIN") {
-    redirect("/dashboard/inventory")
+    redirect("/dashboard/overview")
   } else {
     redirect("/dashboard/quotation")
   }

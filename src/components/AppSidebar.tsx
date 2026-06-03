@@ -23,7 +23,7 @@ export function AppSidebar() {
   const items = [
     {
       title: "Dashboard",
-      url: "/dashboard",
+      url: isAdmin ? "/dashboard/overview" : "/dashboard/quotation",
       icon: LayoutDashboard,
       visible: true,
     },
