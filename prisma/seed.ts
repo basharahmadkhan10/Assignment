@@ -13,7 +13,13 @@ async function main() {
   const bcrypt = (await import('bcryptjs')).default;
 
   console.log("DB URL is:", dbUrl);
-  const prisma = new PrismaClient({ datasourceUrl: dbUrl });
+  const prisma = new PrismaClient({
+    datasources: {
+      db: {
+        url: dbUrl,
+      },
+    },
+  });
 
   const adminPassword = await bcrypt.hash('admin123', 10)
   const sellerPassword = await bcrypt.hash('seller123', 10)
